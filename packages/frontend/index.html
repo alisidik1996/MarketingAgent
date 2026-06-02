@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Marketing Activity Monitor</title>
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="/src/style.css" />
 </head>
 <body>
 
@@ -12,7 +12,6 @@
   <aside class="sidebar" id="sidebar">
     <div class="sidebar-header">
       <div class="logo">
-        <span class="logo-icon">📊</span>
         <span class="logo-text">MarketingHub</span>
       </div>
       <button class="sidebar-toggle" id="sidebarToggle">&#9776;</button>
@@ -70,6 +69,11 @@
           <span class="refresh-icon">↻</span> Refresh
         </button>
         <div class="last-updated" id="lastUpdated">—</div>
+        <div class="token-status token-check" id="tokenStatus">
+          <span class="token-icon">⏳</span>
+          <span class="token-text">Memeriksa token...</span>
+          <button class="btn-extend-token" id="btnExtendToken">🔄 Perpanjang</button>
+        </div>
       </div>
     </header>
 
@@ -209,6 +213,86 @@
     </section>
   </main>
 
-  <script src="app.js"></script>
+  <!-- ── AI AGENT PANEL ───────────────────────────── -->
+  <!-- Floating trigger button -->
+  <button class="ai-fab" id="aiFab" title="AI Marketing Agent">
+    <span class="ai-fab-icon">🤖</span>
+    <span class="ai-fab-label">MoCa Agent</span>
+    <span class="ai-fab-badge" id="aiFabBadge" style="display:none">1</span>
+  </button>
+
+  <!-- Agent panel (slide-in from right) -->
+  <div class="ai-panel" id="aiPanel">
+    <div class="ai-panel-header">
+      <div class="ai-panel-title">
+        <span class="ai-avatar">🤖</span>
+        <div>
+          <div class="ai-name">Momaz Chat Assistant</div>
+          <div class="ai-subtitle" id="aiModelLabel">—</div>
+        </div>
+      </div>
+      <div class="ai-panel-actions">
+        <button class="ai-btn-icon" id="btnAiSettings" title="Pengaturan">⚙️</button>
+        <button class="ai-btn-icon" id="btnAiClear" title="Hapus riwayat">🗑</button>
+        <button class="ai-btn-icon" id="btnAiClose" title="Tutup">✕</button>
+      </div>
+    </div>
+
+    <!-- Settings panel -->
+    <div class="ai-settings-panel" id="aiSettingsPanel" style="display:none">
+      <div class="ai-settings-row">
+        <label>Model</label>
+        <select id="aiModelSelect"></select>
+      </div>
+      <div class="ai-settings-row">
+        <label>Suhu (Kreativitas)</label>
+        <input type="range" id="aiTemp" min="0" max="1" step="0.1" value="0.7" />
+        <span id="aiTempVal">0.7</span>
+      </div>
+      <div class="ai-settings-row">
+        <label>Bahasa</label>
+        <select id="aiLang">
+          <option value="id">Bahasa Indonesia</option>
+          <option value="en">English</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Quick actions -->
+    <div class="ai-quick-actions" id="aiQuickActions">
+      <button class="ai-quick-btn" data-prompt="Analisis performa kampanye saat ini dan berikan insight utama.">📊 Analisis Performa</button>
+      <button class="ai-quick-btn" data-prompt="Kampanye mana yang paling tidak efisien? Mengapa dan apa rekomendasimu?">⚠️ Temukan Masalah</button>
+      <button class="ai-quick-btn" data-prompt="Berikan rekomendasi optimasi budget berdasarkan data kampanye yang ada.">💡 Optimasi Budget</button>
+      <button class="ai-quick-btn" data-prompt="Bandingkan performa CPAS Ads vs Regular Ads dan rekomendasikan alokasi terbaik.">⚖️ CPAS vs Regular</button>
+      <button class="ai-quick-btn" data-prompt="Buat ringkasan eksekutif performa iklan dalam 3 poin utama untuk dilaporkan ke manajemen.">📝 Ringkasan Eksekutif</button>
+      <button class="ai-quick-btn" data-prompt="Kampanye mana yang sebaiknya ditingkatkan budget-nya dan mana yang sebaiknya di-pause? Berikan alasan.">🎯 Rekomendasi Aksi</button>
+    </div>
+
+    <!-- Chat messages -->
+    <div class="ai-messages" id="aiMessages">
+      <div class="ai-welcome">
+        <div class="ai-welcome-icon">🤖</div>
+        <div class="ai-welcome-title">Halo! Saya MoCa</div>
+        <div class="ai-welcome-text">Saya bisa membantu menganalisis data kampanye Meta Ads kamu, memberikan insight, rekomendasi optimasi, dan menjawab pertanyaan seputar performa iklan.<br><br>Pilih aksi cepat di atas atau ketik pertanyaanmu.</div>
+      </div>
+    </div>
+
+    <!-- Input area -->
+    <div class="ai-input-area">
+      <div class="ai-input-wrapper">
+        <textarea id="aiInput" placeholder="Tanya tentang kampanye, insight, atau minta rekomendasi..." rows="1"></textarea>
+        <button class="ai-send-btn" id="aiSendBtn" title="Kirim">
+          <span id="aiSendIcon">➤</span>
+        </button>
+      </div>
+      <div class="ai-input-footer">
+        <span class="ai-context-info" id="aiContextInfo">📊 Data belum dimuat</span>
+        <span class="ai-powered">Powered by BluesMinds</span>
+      </div>
+    </div>
+  </div>
+  <div class="ai-overlay" id="aiOverlay"></div>
+
+  <script type="module" src="/src/main.js"></script>
 </body>
 </html>
