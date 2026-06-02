@@ -1324,3 +1324,10 @@ td.num {
 }
 .ai-context-info { font-weight: 500; }
 .ai-powered      { opacity: 0.6; }
+
+/* ===== SORTABLE HEADERS ===== */
+thead th.sortable { cursor: pointer; user-select: none; }
+thead th.sortable:hover { color: var(--text); background: #252d3d; }
+thead th.sorted { color: var(--accent-light); }
+.sort-arrow { font-size: 11px; opacity: 0.6; margin-left: 4px; }
+thead th.sorted .sort-arrow { opacity: 1; color: var(--accent-light); }

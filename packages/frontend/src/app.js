@@ -306,9 +306,29 @@ function renderTablePage() {
   const columns = getActiveColumns();
   dom.tableCard.style.display = 'flex';
 
-  // Dynamic header
+  // Dynamic header with sort indicators
   document.querySelector('#campaignTable thead tr').innerHTML =
-    columns.map(k => `<th>${COLUMN_CONFIG[k].label}</th>`).join('');
+    columns.map(k => {
+      const cfg = COLUMN_CONFIG[k];
+      if (!cfg.isNum && k !== 'name') return `<th>${cfg.label}</th>`;
+      const isSorted = state.sortKey === k;
+      const arrow = isSorted ? (state.sortDir === 'asc' ? ' ▲' : ' ▼') : '';
+      const sortable = cfg.isNum || k === 'name';
+      return sortable
+        ? `<th class="sortable${isSorted ? ' sorted' : ''}" data-col="${k}">${cfg.label}<span class="sort-arrow">${arrow || ' ↕'}</span></th>`
+        : `<th>${cfg.label}</th>`;
+    }).join('');
+
+  // Attach sort click listeners on headers
+  document.querySelectorAll('#campaignTable thead th.sortable').forEach(th => {
+    th.style.cursor = 'pointer';
+    th.addEventListener('click', () => {
+      const key = th.dataset.col;
+      state.sortDir = state.sortKey === key ? (state.sortDir === 'asc' ? 'desc' : 'asc') : 'desc';
+      state.sortKey = key;
+      applyFiltersAndSort();
+    });
+  });
 
   // Dynamic body
   dom.campaignTableBody.innerHTML = list.map(c => `
@@ -320,20 +340,12 @@ function renderTablePage() {
 
         const val = c._raw[k] ?? c[k] ?? 0;
 
-        // CPAS ROAS — ratio, 2 decimal
         if (k === 'cpas_roas') return `<td class="num">${val > 0 ? val.toFixed(2) + 'x' : '—'}</td>`;
-
-        // Currency columns
         const isCurrency = ['spend','cpm','cpc','cpas_purchase_value','cpas_atc_value'].includes(k);
         if (isCurrency)  return `<td class="num">${val > 0 ? fmtCurrency(val, cur) : '—'}</td>`;
-
-        // Percent
         if (k === 'ctr')  return `<td class="num">${fmtPct(val)}</td>`;
-
-        // Count (0 shown as —)
         const isCount = ['cpas_purchase','cpas_atc'].includes(k);
         if (isCount)  return `<td class="num">${val > 0 ? fmtNumber(val) : '—'}</td>`;
-
         return `<td class="num">${fmtNumber(val)}</td>`;
       }).join('')}
     </tr>`).join('') || `<tr><td colspan="${columns.length}">
@@ -502,17 +514,6 @@ export function initEvents() {
   dom.searchCampaign.addEventListener('input', applyFiltersAndSort);
   dom.filterStatus.addEventListener('change', applyFiltersAndSort);
   dom.btnExportCSV.addEventListener('click', exportCSV);
-
-  document.querySelectorAll('#campaignTable thead th[data-sort]').forEach(th => {
-    th.addEventListener('click', () => {
-      const key = th.dataset.sort;
-      state.sortDir = state.sortKey === key ? (state.sortDir === 'asc' ? 'desc' : 'asc') : 'desc';
-      state.sortKey = key;
-      document.querySelectorAll('#campaignTable thead th').forEach(t => t.classList.remove('sort-asc','sort-desc'));
-      th.classList.add(state.sortDir === 'asc' ? 'sort-asc' : 'sort-desc');
-      applyFiltersAndSort();
-    });
-  });
 
   dom.campaignTableBody.addEventListener('click', e => {
     const btn = e.target.closest('.btn-detail');
