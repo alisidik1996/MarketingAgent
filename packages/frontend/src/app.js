@@ -352,6 +352,42 @@ function renderTablePage() {
       <div class="empty-state"><div class="empty-icon">📭</div><p>Tidak ada kampanye</p></div>
     </td></tr>`;
 
+  // Totals footer
+  const totals = list.reduce((acc, c) => {
+    columns.forEach(k => {
+      if (!['name','status','detail','ctr','cpm','cpc','cpas_roas'].includes(k)) {
+        acc[k] = (acc[k] || 0) + (c._raw[k] ?? c[k] ?? 0);
+      }
+    });
+    return acc;
+  }, {});
+
+  // Derived totals
+  const totalSpend  = totals.spend  || 0;
+  const totalImpres = totals.impressions || 0;
+  const totalClicks = totals.clicks || 0;
+  const avgCTR      = totalImpres > 0 ? totalClicks / totalImpres * 100 : 0;
+  const avgCPM      = totalImpres > 0 ? totalSpend / totalImpres * 1000 : 0;
+  const avgCPC      = totalClicks > 0 ? totalSpend / totalClicks : 0;
+  const cpasVal     = totals.cpas_purchase_value || 0;
+  const avgROAS     = totalSpend > 0 && cpasVal > 0 ? cpasVal / totalSpend : 0;
+
+  const tfoot = document.querySelector('#campaignTable tfoot tr');
+  if (tfoot) {
+    tfoot.innerHTML = columns.map(k => {
+      if (k === 'name')   return `<td class="col-sticky foot-label">Total (${list.length})</td>`;
+      if (k === 'status' || k === 'detail') return `<td></td>`;
+      if (k === 'ctr')         return `<td class="num foot-val">${fmtPct(avgCTR)}</td>`;
+      if (k === 'cpm')         return `<td class="num foot-val">${fmtCurrency(avgCPM, cur)}</td>`;
+      if (k === 'cpc')         return `<td class="num foot-val">${fmtCurrency(avgCPC, cur)}</td>`;
+      if (k === 'cpas_roas')   return `<td class="num foot-val">${avgROAS > 0 ? avgROAS.toFixed(2) + 'x' : '—'}</td>`;
+      const val = totals[k] || 0;
+      const isCurrency = ['spend','cpas_purchase_value','cpas_atc_value'].includes(k);
+      if (isCurrency) return `<td class="num foot-val">${val > 0 ? fmtCurrency(val, cur) : '—'}</td>`;
+      return `<td class="num foot-val">${val > 0 ? fmtNumber(val) : '—'}</td>`;
+    }).join('');
+  }
+
   dom.tableInfo.textContent = `${list.length} kampanye`;
   dom.pagination.innerHTML = '';
 }

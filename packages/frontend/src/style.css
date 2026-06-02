@@ -1331,3 +1331,31 @@ thead th.sortable:hover { color: var(--text); background: #252d3d; }
 thead th.sorted { color: var(--accent-light); }
 .sort-arrow { font-size: 11px; opacity: 0.6; margin-left: 4px; }
 thead th.sorted .sort-arrow { opacity: 1; color: var(--accent-light); }
+
+/* ===== TABLE FOOTER TOTALS ===== */
+tfoot tr {
+  background: var(--bg3);
+  border-top: 2px solid var(--border);
+  position: sticky;
+  bottom: 0;
+  z-index: 3;
+}
+tfoot td {
+  padding: 10px 16px;
+  white-space: nowrap;
+  font-size: 13px;
+}
+tfoot .foot-label {
+  font-weight: 700;
+  color: var(--text-dim);
+  background: var(--bg3);
+}
+tfoot .foot-val {
+  font-weight: 700;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+tfoot .col-sticky {
+  background: var(--bg3);
+  z-index: 4;
+}
