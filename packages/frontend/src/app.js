@@ -7,7 +7,7 @@ import {
   AD_GROUPS, DEFAULT_ACCOUNT, ROWS_PER_PAGE,
   LS_TOKEN, LS_EXPIRY, LS_TYPE,
   TOKEN_WARN_DAYS, TOKEN_REFRESH_DAYS,
-  COLUMN_CONFIG, ACTIVE_COLUMNS,
+  COLUMN_CONFIG, ACTIVE_COLUMNS_REGULAR, ACTIVE_COLUMNS_CPAS,
 } from './lib/config.js';
 
 import {
@@ -198,9 +198,18 @@ export const TokenManager = {
 };
 
 // ── RENDER TABLE ──────────────────────────────────────
+function getActiveColumns() {
+  return state.activeAdGroup === 'CPAS Ads' ? ACTIVE_COLUMNS_CPAS : ACTIVE_COLUMNS_REGULAR;
+}
+
+function getActionValue(actionValues, type) {
+  if (!Array.isArray(actionValues)) return 0;
+  const a = actionValues.find(x => x.action_type === type);
+  return a ? parseFloat(a.value) || 0 : 0;
+}
+
 function buildRow(c) {
-  const ins = state.insightMap[c.id]   || {};
-  const meta = state.campaignMeta[c.id] || c;
+  const ins  = state.insightMap[c.id]   || {};
   const cur  = state.accountCurrency;
 
   const spend       = parseFloat(ins.spend) || 0;
@@ -213,12 +222,35 @@ function buildRow(c) {
   const cpc         = parseFloat(ins.cpc) || 0;
   const lpv         = getAction(ins.actions, 'landing_page_view');
 
-  const purchases  = getAction(ins.actions, 'purchase') || getAction(ins.actions, 'offsite_conversion.fb_pixel_purchase');
-  const leads      = getAction(ins.actions, 'lead')     || getAction(ins.actions, 'offsite_conversion.fb_pixel_lead');
-  const atc        = getAction(ins.actions, 'add_to_cart') || getAction(ins.actions, 'offsite_conversion.fb_pixel_add_to_cart');
+  const purchases      = getAction(ins.actions, 'purchase') || getAction(ins.actions, 'offsite_conversion.fb_pixel_purchase');
+  const leads          = getAction(ins.actions, 'lead')     || getAction(ins.actions, 'offsite_conversion.fb_pixel_lead');
+  const atc            = getAction(ins.actions, 'add_to_cart') || getAction(ins.actions, 'offsite_conversion.fb_pixel_add_to_cart');
   const totalActions   = purchases + leads + atc;
   const costPerResult  = totalActions > 0 ? spend / totalActions : 0;
   const costPerLPV     = lpv > 0 ? spend / lpv : 0;
+
+  // CPAS "item bersama" metrics — dari catalog_segment_actions / catalog_segment_value
+  const catActions = ins.catalog_segment_actions || [];
+  const catValues  = ins.catalog_segment_value   || [];
+
+  const getSegAction = type => {
+    const a = catActions.find(x => x.action_type === type);
+    return a ? parseFloat(a.value) || 0 : 0;
+  };
+  const getSegValue = type => {
+    const a = catValues.find(x => x.action_type === type);
+    return a ? parseFloat(a.value) || 0 : 0;
+  };
+
+  const cpas_purchase       = getSegAction('omni_purchase');
+  const cpas_purchase_value = getSegValue('omni_purchase');
+  const cpas_atc            = getSegAction('add_to_cart');
+  const cpas_atc_value      = getSegValue('add_to_cart');
+  // ROAS dari field khusus jika ada, fallback hitung manual
+  const roas_raw   = ins.catalog_segment_value_omni_purchase_roas;
+  const cpas_roas  = roas_raw
+    ? parseFloat(roas_raw)
+    : (spend > 0 && cpas_purchase_value > 0 ? cpas_purchase_value / spend : 0);
 
   const qRank  = ins.quality_ranking           || '—';
   const erRank = ins.engagement_rate_ranking   || '—';
@@ -231,7 +263,11 @@ function buildRow(c) {
     clicks, ctr, cpc, lpv, costPerLPV,
     totalActions, costPerResult,
     qRank, erRank, crRank,
-    _raw: { spend, impressions, clicks, ctr, cpc, reach, frequency, cpm, lpv, costPerResult },
+    cpas_purchase, cpas_purchase_value,
+    cpas_atc, cpas_atc_value,
+    cpas_roas,
+    _raw: { spend, impressions, clicks, ctr, cpc, reach, frequency, cpm, lpv, costPerResult,
+            cpas_purchase, cpas_purchase_value, cpas_atc, cpas_atc_value, cpas_roas },
   };
 }
 
@@ -265,34 +301,46 @@ function rankBadge(val) {
 }
 
 function renderTablePage() {
-  const list = state.filteredCampaigns;
-  const cur  = state.accountCurrency;
+  const list    = state.filteredCampaigns;
+  const cur     = state.accountCurrency;
+  const columns = getActiveColumns();
   dom.tableCard.style.display = 'flex';
 
   // Dynamic header
   document.querySelector('#campaignTable thead tr').innerHTML =
-    ACTIVE_COLUMNS.map(k => `<th>${COLUMN_CONFIG[k].label}</th>`).join('');
+    columns.map(k => `<th>${COLUMN_CONFIG[k].label}</th>`).join('');
 
   // Dynamic body
   dom.campaignTableBody.innerHTML = list.map(c => `
     <tr>
-      ${ACTIVE_COLUMNS.map(k => {
+      ${columns.map(k => {
         if (k === 'name')   return `<td class="col-sticky"><div class="campaign-name">${escHtml(c.name)}</div></td>`;
         if (k === 'status') return `<td><span class="status-badge ${c.status}">${c.status}</span></td>`;
         if (k === 'detail') return `<td><button class="btn-detail" data-id="${c.id}" data-name="${escHtml(c.name)}">▶ Detail</button></td>`;
+
         const val = c._raw[k] ?? c[k] ?? 0;
-        const fmt = (k === 'spend' || k === 'cpm' || k === 'cpc')
-          ? fmtCurrency(val, cur)
-          : k === 'ctr' ? fmtPct(val) : fmtNumber(val);
-        return `<td class="num">${fmt}</td>`;
+
+        // CPAS ROAS — ratio, 2 decimal
+        if (k === 'cpas_roas') return `<td class="num">${val > 0 ? val.toFixed(2) + 'x' : '—'}</td>`;
+
+        // Currency columns
+        const isCurrency = ['spend','cpm','cpc','cpas_purchase_value','cpas_atc_value'].includes(k);
+        if (isCurrency)  return `<td class="num">${val > 0 ? fmtCurrency(val, cur) : '—'}</td>`;
+
+        // Percent
+        if (k === 'ctr')  return `<td class="num">${fmtPct(val)}</td>`;
+
+        // Count (0 shown as —)
+        const isCount = ['cpas_purchase','cpas_atc'].includes(k);
+        if (isCount)  return `<td class="num">${val > 0 ? fmtNumber(val) : '—'}</td>`;
+
+        return `<td class="num">${fmtNumber(val)}</td>`;
       }).join('')}
-    </tr>`).join('') || `<tr><td colspan="${ACTIVE_COLUMNS.length}">
+    </tr>`).join('') || `<tr><td colspan="${columns.length}">
       <div class="empty-state"><div class="empty-icon">📭</div><p>Tidak ada kampanye</p></div>
     </td></tr>`;
 
   dom.tableInfo.textContent = `${list.length} kampanye`;
-
-  // Simple pagination (all on one page for now — backend already limits)
   dom.pagination.innerHTML = '';
 }
 
@@ -367,18 +415,29 @@ function emptyState(msg) {
 
 // ── EXPORT CSV ────────────────────────────────────────
 function exportCSV() {
-  const cur = state.accountCurrency;
-  const headers = ['Kampanye','Status','Spend','Impresi','Jangkauan','Frekuensi','CPM','Klik','CTR','CPC'];
+  const cur    = state.accountCurrency;
+  const isCpas = state.activeAdGroup === 'CPAS Ads';
+
+  const headers = ['Kampanye','Status','Spend','Impresi','Jangkauan','Frekuensi','CPM','Klik','CTR','CPC',
+    ...(isCpas ? ['Pembelian Item Bersama','Nilai Konversi Pembelian','Tambah Keranjang Item Bersama','Nilai Konversi Keranjang','ROAS Item Bersama'] : []),
+  ];
+
   const rows = state.filteredCampaigns.map(c => [
     `"${c.name.replace(/"/g,'""')}"`, c.status,
     c.spend.toFixed(2), c.impressions, c.reach, c.frequency.toFixed(2),
     c.cpm.toFixed(2), c.clicks, c.ctr.toFixed(2)+'%', c.cpc.toFixed(2),
+    ...(isCpas ? [
+      c.cpas_purchase, c.cpas_purchase_value.toFixed(2),
+      c.cpas_atc, c.cpas_atc_value.toFixed(2),
+      c.cpas_roas.toFixed(2),
+    ] : []),
   ]);
+
   const csv  = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
   const blob = new Blob(['\uFEFF'+csv], { type: 'text/csv;charset=utf-8' });
   const url  = URL.createObjectURL(blob);
   const a    = document.createElement('a');
-  a.href = url; a.download = `meta-ads-${state.dateRange}-${Date.now()}.csv`;
+  a.href = url; a.download = `meta-${isCpas ? 'cpas' : 'regular'}-${state.dateRange}-${Date.now()}.csv`;
   a.click(); URL.revokeObjectURL(url);
 }
 
@@ -388,10 +447,11 @@ export async function loadDashboard() {
   const dp = getDatePreset(state.dateRange);
 
   try {
+    const isCpas = state.activeAdGroup === 'CPAS Ads';
     const [accInfo, campaigns, campaignInsights] = await Promise.all([
       fetchAccount(state.accountId),
       fetchCampaigns(state.accountId),
-      fetchCampaignInsights(state.accountId, dp),
+      fetchCampaignInsights(state.accountId, dp, isCpas),
     ]);
 
     state.accountName     = accInfo.name || 'Ad Account';

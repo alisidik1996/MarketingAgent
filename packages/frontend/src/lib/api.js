@@ -2,7 +2,7 @@
  * API client — all calls go to our backend proxy.
  * The Meta token is sent in a header (never in URL / public source).
  */
-import { API_BASE, INSIGHT_FIELDS } from './config.js';
+import { API_BASE, INSIGHT_FIELDS, INSIGHT_FIELDS_CPAS } from './config.js';
 
 // ── Meta token storage ────────────────────────────────
 let _token = '';
@@ -47,16 +47,17 @@ export const fetchAccount = accountId =>
 export const fetchCampaigns = accountId =>
   post('/meta/campaigns', { accountId });
 
-export const fetchCampaignInsights = (accountId, { since, until }) =>
+export const fetchCampaignInsights = (accountId, { since, until }, isCpas = false) =>
   post('/meta/insights', {
-    accountId, fields: INSIGHT_FIELDS,
+    accountId,
+    fields: isCpas ? INSIGHT_FIELDS_CPAS : INSIGHT_FIELDS,
     since, until, level: 'campaign',
   });
 
 export const fetchAccountInsights = (accountId, { since, until }) =>
   post('/meta/insights', {
     accountId,
-    fields: 'spend,impressions,clicks,ctr,cpm,cpc,reach,frequency,actions,cost_per_action_type,inline_link_clicks',
+    fields: 'spend,impressions,clicks,ctr,cpm,cpc,reach,frequency,actions,action_values,cost_per_action_type,inline_link_clicks',
     since, until, level: 'account',
   });
 

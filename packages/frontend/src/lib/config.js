@@ -34,8 +34,8 @@ export const LS_TYPE   = 'mam_meta_token_type';
 export const TOKEN_WARN_DAYS    = 7;
 export const TOKEN_REFRESH_DAYS = 3;
 
-// Insight fields requested from Meta API
-export const INSIGHT_FIELDS = [
+// Insight fields — base (semua akun)
+export const INSIGHT_FIELDS_BASE = [
   'campaign_id', 'campaign_name',
   'spend', 'reach', 'frequency',
   'impressions', 'cpm',
@@ -43,29 +43,70 @@ export const INSIGHT_FIELDS = [
   'clicks', 'ctr',
   'cost_per_inline_link_click',
   'cost_per_unique_click', 'cpc',
-  'actions', 'cost_per_action_type',
+  'actions', 'action_values',
+  'cost_per_action_type',
   'quality_ranking',
   'engagement_rate_ranking',
   'conversion_rate_ranking',
 ].join(',');
 
+// CPAS insight fields — tambah catalog_segment fields
+export const INSIGHT_FIELDS_CPAS = [
+  'campaign_id', 'campaign_name',
+  'spend', 'reach', 'frequency',
+  'impressions', 'cpm',
+  'inline_link_clicks',
+  'clicks', 'ctr',
+  'cost_per_inline_link_click',
+  'cost_per_unique_click', 'cpc',
+  'actions', 'action_values',
+  'cost_per_action_type',
+  'quality_ranking',
+  'engagement_rate_ranking',
+  'conversion_rate_ranking',
+  'catalog_segment_actions',
+  'catalog_segment_value',
+  'catalog_segment_value_omni_purchase_roas',
+].join(',');
+
+// Alias untuk backward compat
+export const INSIGHT_FIELDS = INSIGHT_FIELDS_BASE;
+
 export const COLUMN_CONFIG = {
-  name:        { label: 'Kampanye',            isNum: false },
-  status:      { label: 'Penayangan',          isNum: false },
-  reach:       { label: 'Jangkauan',           isNum: true  },
-  spend:       { label: 'Jumlah Dibelanjakan', isNum: true  },
-  impressions: { label: 'Impresi',             isNum: true  },
-  cpm:         { label: 'CPM',                 isNum: true  },
-  clicks:      { label: 'Klik (Semua)',        isNum: true  },
-  ctr:         { label: 'CTR (Semua)',         isNum: true  },
-  cpc:         { label: 'CPC (Semua)',         isNum: true  },
-  detail:      { label: 'Detail',              isNum: false },
+  name:                { label: 'Kampanye',                                         isNum: false },
+  status:              { label: 'Penayangan',                                       isNum: false },
+  reach:               { label: 'Jangkauan',                                        isNum: true  },
+  spend:               { label: 'Jumlah Dibelanjakan',                              isNum: true  },
+  impressions:         { label: 'Impresi',                                          isNum: true  },
+  cpm:                 { label: 'CPM',                                              isNum: true  },
+  clicks:              { label: 'Klik (Semua)',                                     isNum: true  },
+  ctr:                 { label: 'CTR (Semua)',                                      isNum: true  },
+  cpc:                 { label: 'CPC (Semua)',                                      isNum: true  },
+  // CPAS-only columns
+  cpas_purchase:       { label: 'Pembelian Item Bersama',                           isNum: true  },
+  cpas_purchase_value: { label: 'Nilai Konversi Pembelian Item Bersama',            isNum: true  },
+  cpas_atc:            { label: 'Tambah ke Keranjang Item Bersama',                 isNum: true  },
+  cpas_atc_value:      { label: 'Nilai Konversi Keranjang Item Bersama',            isNum: true  },
+  cpas_roas:           { label: 'ROAS Pembelian Item Bersama',                      isNum: true  },
+  detail:              { label: 'Detail',                                           isNum: false },
 };
 
-export const ACTIVE_COLUMNS = [
+export const ACTIVE_COLUMNS_REGULAR = [
   'name', 'status', 'reach', 'spend',
   'impressions', 'cpm', 'clicks', 'ctr', 'cpc', 'detail',
 ];
+
+export const ACTIVE_COLUMNS_CPAS = [
+  'name', 'status', 'reach', 'spend',
+  'impressions', 'cpm', 'clicks', 'ctr', 'cpc',
+  'cpas_purchase', 'cpas_purchase_value',
+  'cpas_atc', 'cpas_atc_value',
+  'cpas_roas',
+  'detail',
+];
+
+// Alias — akan dioverride di app.js sesuai tab aktif
+export const ACTIVE_COLUMNS = ACTIVE_COLUMNS_REGULAR;
 
 export const AI_MODELS = [
   { id: 'gpt-5-chat',         label: 'GPT-5 Chat ✓'    },
