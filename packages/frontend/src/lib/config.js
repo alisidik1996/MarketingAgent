@@ -93,7 +93,7 @@ export const COLUMN_CONFIG = {
 
 export const ACTIVE_COLUMNS_REGULAR = [
   'name', 'status', 'reach', 'spend',
-  'impressions', 'cpm', 'clicks', 'ctr', 'cpc', 'detail',
+  'impressions', 'cpm', 'clicks', 'ctr', 'cpc',
 ];
 
 export const ACTIVE_COLUMNS_CPAS = [
@@ -102,7 +102,6 @@ export const ACTIVE_COLUMNS_CPAS = [
   'cpas_purchase', 'cpas_purchase_value',
   'cpas_atc', 'cpas_atc_value',
   'cpas_roas',
-  'detail',
 ];
 
 // Alias — akan dioverride di app.js sesuai tab aktif

@@ -69,11 +69,11 @@ export const fetchDailyInsights = (accountId, { since, until }) =>
     timeIncrement: 1,
   });
 
-export const fetchAdSets = (campaignId, { since, until }) =>
-  post('/meta/adsets', { campaignId, since, until });
+export const fetchAdSets = (campaignId, { since, until }, isCpas = false) =>
+  post('/meta/adsets', { campaignId, since, until, isCpas });
 
-export const fetchAds = (campaignId, { since, until }) =>
-  post('/meta/ads', { campaignId, since, until });
+export const fetchAds = (campaignId, { since, until }, isCpas = false, adsetId = null) =>
+  post('/meta/ads', { campaignId, since, until, isCpas, adsetId });
 
 // ── AI endpoint ───────────────────────────────────────
 export const chatWithAI = (model, messages, temperature, max_tokens) =>

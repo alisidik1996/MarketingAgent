@@ -247,9 +247,9 @@ function buildRow(c) {
   const cpas_atc            = getSegAction('add_to_cart');
   const cpas_atc_value      = getSegValue('add_to_cart');
   // ROAS dari field khusus jika ada, fallback hitung manual
-  const roas_raw   = ins.catalog_segment_value_omni_purchase_roas;
-  const cpas_roas  = roas_raw
-    ? parseFloat(roas_raw)
+  const roasArr = ins.catalog_segment_value_omni_purchase_roas;
+  const cpas_roas = Array.isArray(roasArr) && roasArr.length
+    ? parseFloat(roasArr[0].value) || 0
     : (spend > 0 && cpas_purchase_value > 0 ? cpas_purchase_value / spend : 0);
 
   const qRank  = ins.quality_ranking           || '—';
@@ -393,68 +393,175 @@ function renderTablePage() {
 }
 
 // ── DRAWER ────────────────────────────────────────────
+const drawerNav = [];  // breadcrumb stack: [{label, action}]
+
 function openDrawer(campaignId, campaignName) {
   state.drawerCampaignId = campaignId;
-  dom.drawerTitle.textContent    = campaignName;
-  dom.drawerSubtitle.textContent = 'ID: ' + campaignId;
+  drawerNav.length = 0;
   dom.adsetDrawer.classList.add('open');
   dom.drawerOverlay.classList.add('open');
-  document.querySelectorAll('.drawer-tab').forEach(t =>
-    t.classList.toggle('active', t.dataset.tab === 'adsets'));
-  loadDrawerTab('adsets');
+  loadAdSets(campaignId, campaignName);
 }
 
 function closeDrawer() {
   dom.adsetDrawer.classList.remove('open');
   dom.drawerOverlay.classList.remove('open');
+  drawerNav.length = 0;
 }
 
-async function loadDrawerTab(tab) {
-  state.drawerTab = tab;
-  dom.drawerBody.innerHTML = `<div style="text-align:center;padding:48px">
-    <div class="spinner" style="margin:0 auto 14px"></div><p style="color:#64748b">Memuat...</p></div>`;
+function renderBreadcrumb() {
+  const bc = document.getElementById('drawerBreadcrumb');
+  if (!bc) return;
+  bc.innerHTML = drawerNav.map((n, i) =>
+    i < drawerNav.length - 1
+      ? `<span class="bc-link" data-idx="${i}">${escHtml(n.label)}</span><span class="bc-sep">›</span>`
+      : `<span class="bc-cur">${escHtml(n.label)}</span>`
+  ).join('');
+  bc.querySelectorAll('.bc-link').forEach(el => {
+    el.addEventListener('click', () => {
+      const idx = parseInt(el.dataset.idx);
+      drawerNav.splice(idx + 1);
+      drawerNav[idx].action();
+    });
+  });
+}
 
-  const dp  = getDatePreset(state.dateRange);
-  const cur = state.accountCurrency;
+async function loadAdSets(campaignId, campaignName) {
+  drawerNav.push({ label: campaignName, action: () => loadAdSets(campaignId, campaignName) });
+  dom.drawerTitle.textContent    = campaignName;
+  dom.drawerSubtitle.textContent = 'Ad Sets';
+  renderBreadcrumb();
+  dom.drawerBody.innerHTML = loadingHtml();
+
+  const dp     = getDatePreset(state.dateRange);
+  const cur    = state.accountCurrency;
+  const isCpas = state.activeAdGroup === 'CPAS Ads';
 
   try {
-    if (tab === 'adsets') {
-      const adsets = await fetchAdSets(state.drawerCampaignId, dp);
-      if (!adsets.length) { dom.drawerBody.innerHTML = emptyState('Tidak ada ad set'); return; }
-      dom.drawerBody.innerHTML = `
-        <table class="drawer-table">
-          <thead><tr><th>Ad Set</th><th>Status</th><th>Spend</th><th>Reach</th><th>Impresi</th><th>Klik</th><th>CTR</th><th>CPC</th></tr></thead>
-          <tbody>${adsets.map(a => `<tr>
+    const adsets = await fetchAdSets(campaignId, dp, isCpas);
+    if (!adsets.length) { dom.drawerBody.innerHTML = emptyState('Tidak ada ad set'); return; }
+
+    const cpasHeaders = isCpas ? `
+      <th>Pembelian Item Bersama</th><th>Nilai Konversi</th>
+      <th>Tambah Keranjang</th><th>Nilai Keranjang</th><th>ROAS</th>` : '';
+
+    dom.drawerBody.innerHTML = `
+      <table class="drawer-table">
+        <thead><tr>
+          <th>Ad Set</th><th>Penayangan</th><th>Jangkauan</th>
+          <th>Jumlah Dibelanjakan</th><th>Impresi</th><th>CPM</th>
+          <th>Klik (Semua)</th><th>CTR</th><th>CPC</th>
+          ${cpasHeaders}<th></th>
+        </tr></thead>
+        <tbody>${adsets.map(a => {
+          // For catalog fields: use ins if available, else fallback to campaign-level insight
+          const campIns   = state.insightMap[campaignId] || {};
+          const insForCpas = (a.ins.catalog_segment_actions?.length) ? a.ins : campIns;
+          return `<tr>
             <td class="dn" title="${escHtml(a.name)}">${escHtml(a.name)}</td>
             <td><span class="status-badge ${a.status}">${a.status}</span></td>
-            <td>${fmtCurrency(a.ins.spend||0,cur)}</td>
-            <td>${fmtNumber(a.ins.reach||0)}</td>
-            <td>${fmtNumber(a.ins.impressions||0)}</td>
-            <td>${fmtNumber(a.ins.inline_link_clicks||0)}</td>
-            <td>${fmtPct(a.ins.ctr||0)}</td>
-            <td>${fmtCurrency(a.ins.cpc||0,cur)}</td>
-          </tr>`).join('')}</tbody>
-        </table>`;
-    } else {
-      const ads = await fetchAds(state.drawerCampaignId, dp);
-      if (!ads.length) { dom.drawerBody.innerHTML = emptyState('Tidak ada ad'); return; }
-      dom.drawerBody.innerHTML = `
-        <table class="drawer-table">
-          <thead><tr><th>Ad</th><th>Status</th><th>Spend</th><th>Impresi</th><th>Klik</th><th>CTR</th></tr></thead>
-          <tbody>${ads.map(a => `<tr>
-            <td class="dn" title="${escHtml(a.name)}">${escHtml(a.name)}</td>
-            <td><span class="status-badge ${a.status}">${a.status}</span></td>
-            <td>${fmtCurrency(a.ins.spend||0,cur)}</td>
-            <td>${fmtNumber(a.ins.impressions||0)}</td>
-            <td>${fmtNumber(a.ins.inline_link_clicks||0)}</td>
-            <td>${fmtPct(a.ins.ctr||0)}</td>
-          </tr>`).join('')}</tbody>
-        </table>`;
-    }
+            <td class="num">${fmtNumber(a.ins.reach||0)}</td>
+            <td class="num">${fmtCurrency(a.ins.spend||0,cur)}</td>
+            <td class="num">${fmtNumber(a.ins.impressions||0)}</td>
+            <td class="num">${fmtCurrency(a.ins.cpm||0,cur)}</td>
+            <td class="num">${fmtNumber(a.ins.clicks||0)}</td>
+            <td class="num">${fmtPct(a.ins.ctr||0)}</td>
+            <td class="num">${fmtCurrency(a.ins.cpc||0,cur)}</td>
+            ${isCpas ? cpasRowHtml(insForCpas) : ''}
+            <td><button class="btn-detail btn-drill" data-id="${a.id}" data-name="${escHtml(a.name)}">▶ Ads</button></td>
+          </tr>`;
+        }).join('')}</tbody>
+      </table>`;
+
+    dom.drawerBody.querySelectorAll('.btn-drill').forEach(btn => {
+      btn.addEventListener('click', () => {
+        loadAds(campaignId, btn.dataset.id, btn.dataset.name);
+      });
+    });
   } catch (err) {
-    dom.drawerBody.innerHTML = `<div class="empty-state"><div class="empty-icon">⚠️</div>
-      <p style="color:#ef4444">${escHtml(err.message)}</p></div>`;
+    dom.drawerBody.innerHTML = errHtml(err.message);
   }
+}
+
+async function loadAds(campaignId, adsetId, adsetName) {
+  drawerNav.push({ label: adsetName, action: () => loadAds(campaignId, adsetId, adsetName) });
+  dom.drawerTitle.textContent    = adsetName;
+  dom.drawerSubtitle.textContent = 'Ads';
+  renderBreadcrumb();
+  dom.drawerBody.innerHTML = loadingHtml();
+
+  const dp     = getDatePreset(state.dateRange);
+  const cur    = state.accountCurrency;
+  const isCpas = state.activeAdGroup === 'CPAS Ads';
+
+  try {
+    const ads = await fetchAds(campaignId, dp, isCpas, adsetId);
+    if (!ads.length) { dom.drawerBody.innerHTML = emptyState('Tidak ada ad'); return; }
+
+    const cpasHeaders = isCpas ? `
+      <th>Pembelian Item Bersama</th><th>Nilai Konversi</th>
+      <th>Tambah Keranjang</th><th>Nilai Keranjang</th><th>ROAS</th>` : '';
+
+    dom.drawerBody.innerHTML = `
+      <table class="drawer-table">
+        <thead><tr>
+          <th>Ad</th><th>Penayangan</th><th>Jangkauan</th>
+          <th>Jumlah Dibelanjakan</th><th>Impresi</th><th>CPM</th>
+          <th>Klik (Semua)</th><th>CTR</th><th>CPC</th>
+          ${cpasHeaders}
+        </tr></thead>
+        <tbody>${ads.map(a => {
+          const campIns    = state.insightMap[campaignId] || {};
+          const insForCpas = (a.ins.catalog_segment_actions?.length) ? a.ins : campIns;
+          return `<tr>
+            <td class="dn" title="${escHtml(a.name)}">${escHtml(a.name)}</td>
+            <td><span class="status-badge ${a.status}">${a.status}</span></td>
+            <td class="num">${fmtNumber(a.ins.reach||0)}</td>
+            <td class="num">${fmtCurrency(a.ins.spend||0,cur)}</td>
+            <td class="num">${fmtNumber(a.ins.impressions||0)}</td>
+            <td class="num">${fmtCurrency(a.ins.cpm||0,cur)}</td>
+            <td class="num">${fmtNumber(a.ins.clicks||0)}</td>
+            <td class="num">${fmtPct(a.ins.ctr||0)}</td>
+            <td class="num">${fmtCurrency(a.ins.cpc||0,cur)}</td>
+            ${isCpas ? cpasRowHtml(insForCpas) : ''}
+          </tr>`;
+        }).join('')}</tbody>
+      </table>`;
+  } catch (err) {
+    dom.drawerBody.innerHTML = errHtml(err.message);
+  }
+}
+
+function cpasRowHtml(ins) {
+  const getSegAction = (type) => {
+    const a = (ins.catalog_segment_actions || []).find(x => x.action_type === type);
+    return a ? parseFloat(a.value) || 0 : 0;
+  };
+  const getSegValue = (type) => {
+    const a = (ins.catalog_segment_value || []).find(x => x.action_type === type);
+    return a ? parseFloat(a.value) || 0 : 0;
+  };
+  const roasArr = ins.catalog_segment_value_omni_purchase_roas;
+  const roas = Array.isArray(roasArr) && roasArr.length
+    ? parseFloat(roasArr[0].value) || 0
+    : (() => { const v = getSegValue('omni_purchase'), s = parseFloat(ins.spend)||0; return s>0&&v>0?v/s:0; })();
+  const cur = state.accountCurrency;
+  return `
+    <td class="num">${getSegAction('omni_purchase') || '—'}</td>
+    <td class="num">${getSegValue('omni_purchase') > 0 ? fmtCurrency(getSegValue('omni_purchase'),cur) : '—'}</td>
+    <td class="num">${getSegAction('add_to_cart') || '—'}</td>
+    <td class="num">${getSegValue('add_to_cart') > 0 ? fmtCurrency(getSegValue('add_to_cart'),cur) : '—'}</td>
+    <td class="num">${roas > 0 ? roas.toFixed(2)+'x' : '—'}</td>`;
+}
+
+function loadingHtml() {
+  return `<div style="text-align:center;padding:48px">
+    <div class="spinner" style="margin:0 auto 14px"></div>
+    <p style="color:#64748b">Memuat...</p></div>`;
+}
+function errHtml(msg) {
+  return `<div class="empty-state"><div class="empty-icon">⚠️</div>
+    <p style="color:#ef4444">${escHtml(msg)}</p></div>`;
 }
 
 function emptyState(msg) {
@@ -506,6 +613,26 @@ export async function loadDashboard() {
     state.accountCurrency = accInfo.currency || 'IDR';
     dom.accountName.textContent      = state.accountName;
     dom.accountIdDisplay.textContent = `act_${state.accountId} · ${state.accountCurrency}`;
+
+    // Spend info — dari account endpoint (amount_spent, balance, spend_cap)
+    const spendEl = document.getElementById('accountSpendInfo');
+    if (spendEl) {
+      const cur         = state.accountCurrency;
+      const amountSpent = parseFloat(accInfo.amount_spent || 0);
+      const balance     = parseFloat(accInfo.balance      || 0);
+      const spendCap    = parseFloat(accInfo.spend_cap    || 0);
+      spendEl.innerHTML = `
+      
+        <div class="spend-stat">
+          <span class="spend-label">Total Tagihan</span>
+          <span class="spend-val">${fmtCurrency(balance, cur)}</span>
+        </div>
+        ${spendCap > 0 ? `<div class="spend-stat">
+          <span class="spend-label">Batas Spend</span>
+          <span class="spend-val">${fmtCurrency(spendCap, cur)}</span>
+        </div>` : ''}`;
+    }
+
     dom.accountBar.style.display = 'flex';
 
     state.campaigns    = campaigns;
@@ -554,14 +681,6 @@ export function initEvents() {
   dom.campaignTableBody.addEventListener('click', e => {
     const btn = e.target.closest('.btn-detail');
     if (btn) openDrawer(btn.dataset.id, btn.dataset.name);
-  });
-
-  document.querySelectorAll('.drawer-tab').forEach(tab => {
-    tab.addEventListener('click', () => {
-      document.querySelectorAll('.drawer-tab').forEach(t => t.classList.remove('active'));
-      tab.classList.add('active');
-      loadDrawerTab(tab.dataset.tab);
-    });
   });
 
   dom.btnCloseDrawer.addEventListener('click', closeDrawer);

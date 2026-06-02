@@ -1359,3 +1359,51 @@ tfoot .col-sticky {
   background: var(--bg3);
   z-index: 4;
 }
+
+/* ===== DRAWER BREADCRUMB ===== */
+.drawer-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 24px;
+  background: var(--bg3);
+  border-bottom: 1px solid var(--border);
+  font-size: 12px;
+  flex-wrap: wrap;
+  min-height: 38px;
+}
+.bc-link {
+  color: var(--accent-light);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.bc-link:hover { color: var(--text); }
+.bc-sep { color: var(--text-muted); }
+.bc-cur { color: var(--text-dim); font-weight: 500; }
+.drawer-body { flex: 1; overflow: auto; padding: 0; }
+
+/* ===== ACCOUNT SPEND INFO ===== */
+.account-spend-info {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.spend-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.spend-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+}
+.spend-val {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}

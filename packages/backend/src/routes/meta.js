@@ -88,7 +88,7 @@ router.post('/account', requireToken, async (req, res, next) => {
   const { accountId } = req.body;
   try {
     const data = await graphGet(`/act_${accountId}`, {
-      fields: 'name,currency,account_status,timezone_name',
+      fields: 'name,currency,account_status,timezone_name,amount_spent,balance,spend_cap',
       access_token: req.metaToken,
     });
     res.json(data);
@@ -125,9 +125,14 @@ router.post('/insights', requireToken, async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
+const CPAS_EXTRA_FIELDS = ',catalog_segment_actions,catalog_segment_value,catalog_segment_value_omni_purchase_roas';
+
 // ── POST /api/meta/adsets ─────────────────────────────
 router.post('/adsets', requireToken, async (req, res, next) => {
-  const { campaignId, since, until } = req.body;
+  const { campaignId, since, until, isCpas } = req.body;
+  const insightFields = isCpas
+    ? 'adset_id,spend,impressions,clicks,ctr,cpc,reach,frequency,actions,inline_link_clicks' + CPAS_EXTRA_FIELDS
+    : 'adset_id,spend,impressions,clicks,ctr,cpc,reach,frequency,actions,inline_link_clicks';
   try {
     const [adsets, insights] = await Promise.all([
       graphGetAll(`/${campaignId}/adsets`, {
@@ -136,7 +141,7 @@ router.post('/adsets', requireToken, async (req, res, next) => {
         access_token: req.metaToken,
       }),
       graphGetAll(`/${campaignId}/insights`, {
-        fields: 'adset_id,spend,impressions,clicks,ctr,cpc,reach,frequency,actions,inline_link_clicks',
+        fields: insightFields,
         time_range: JSON.stringify({ since, until }),
         level: 'adset',
         limit: 50,
@@ -151,18 +156,26 @@ router.post('/adsets', requireToken, async (req, res, next) => {
 
 // ── POST /api/meta/ads ────────────────────────────────
 router.post('/ads', requireToken, async (req, res, next) => {
-  const { campaignId, since, until } = req.body;
+  const { campaignId, since, until, isCpas, adsetId } = req.body;
+  const insightFields = isCpas
+    ? 'ad_id,spend,impressions,clicks,ctr,cpc,reach,actions,inline_link_clicks' + CPAS_EXTRA_FIELDS
+    : 'ad_id,spend,impressions,clicks,ctr,cpc,reach,actions,inline_link_clicks';
+
+  // If adsetId provided, fetch ads from adset directly (more precise)
+  const adsPath = adsetId ? `/${adsetId}/ads` : `/${campaignId}/ads`;
+
   try {
     const [ads, insights] = await Promise.all([
-      graphGetAll(`/${campaignId}/ads`, {
+      graphGetAll(adsPath, {
         fields: 'id,name,status',
         limit: 50,
         access_token: req.metaToken,
       }),
       graphGetAll(`/${campaignId}/insights`, {
-        fields: 'ad_id,spend,impressions,clicks,ctr,cpc,reach,actions,inline_link_clicks',
+        fields: insightFields,
         time_range: JSON.stringify({ since, until }),
         level: 'ad',
+        ...(adsetId ? { filtering: JSON.stringify([{ field: 'adset.id', operator: 'EQUAL', value: adsetId }]) } : {}),
         limit: 50,
         access_token: req.metaToken,
       }),
