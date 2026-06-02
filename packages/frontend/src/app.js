@@ -252,6 +252,9 @@ function buildRow(c) {
     ? parseFloat(roasArr[0].value) || 0
     : (spend > 0 && cpas_purchase_value > 0 ? cpas_purchase_value / spend : 0);
 
+  // Biaya per Konversi = Spend ÷ Pembelian Item Bersama
+  const cpas_cost_per_conv = cpas_purchase > 0 ? spend / cpas_purchase : 0;
+
   const qRank  = ins.quality_ranking           || '—';
   const erRank = ins.engagement_rate_ranking   || '—';
   const crRank = ins.conversion_rate_ranking   || '—';
@@ -265,9 +268,9 @@ function buildRow(c) {
     qRank, erRank, crRank,
     cpas_purchase, cpas_purchase_value,
     cpas_atc, cpas_atc_value,
-    cpas_roas,
+    cpas_roas, cpas_cost_per_conv,
     _raw: { spend, impressions, clicks, ctr, cpc, reach, frequency, cpm, lpv, costPerResult,
-            cpas_purchase, cpas_purchase_value, cpas_atc, cpas_atc_value, cpas_roas },
+            cpas_purchase, cpas_purchase_value, cpas_atc, cpas_atc_value, cpas_roas, cpas_cost_per_conv },
   };
 }
 
@@ -341,7 +344,7 @@ function renderTablePage() {
         const val = c._raw[k] ?? c[k] ?? 0;
 
         if (k === 'cpas_roas') return `<td class="num">${val > 0 ? val.toFixed(2) + 'x' : '—'}</td>`;
-        const isCurrency = ['spend','cpm','cpc','cpas_purchase_value','cpas_atc_value'].includes(k);
+        const isCurrency = ['spend','cpm','cpc','cpas_purchase_value','cpas_atc_value','cpas_cost_per_conv'].includes(k);
         if (isCurrency)  return `<td class="num">${val > 0 ? fmtCurrency(val, cur) : '—'}</td>`;
         if (k === 'ctr')  return `<td class="num">${fmtPct(val)}</td>`;
         const isCount = ['cpas_purchase','cpas_atc'].includes(k);
@@ -355,7 +358,7 @@ function renderTablePage() {
   // Totals footer
   const totals = list.reduce((acc, c) => {
     columns.forEach(k => {
-      if (!['name','status','detail','ctr','cpm','cpc','cpas_roas'].includes(k)) {
+      if (!['name','status','detail','ctr','cpm','cpc','cpas_roas','cpas_cost_per_conv'].includes(k)) {
         acc[k] = (acc[k] || 0) + (c._raw[k] ?? c[k] ?? 0);
       }
     });
@@ -380,7 +383,11 @@ function renderTablePage() {
       if (k === 'ctr')         return `<td class="num foot-val">${fmtPct(avgCTR)}</td>`;
       if (k === 'cpm')         return `<td class="num foot-val">${fmtCurrency(avgCPM, cur)}</td>`;
       if (k === 'cpc')         return `<td class="num foot-val">${fmtCurrency(avgCPC, cur)}</td>`;
-      if (k === 'cpas_roas')   return `<td class="num foot-val">${avgROAS > 0 ? avgROAS.toFixed(2) + 'x' : '—'}</td>`;
+      if (k === 'cpas_roas')        return `<td class="num foot-val">${avgROAS > 0 ? avgROAS.toFixed(2) + 'x' : '—'}</td>`;
+      if (k === 'cpas_cost_per_conv') {
+        const footCostPerConv = (totals.cpas_purchase || 0) > 0 ? (totals.spend || 0) / totals.cpas_purchase : 0;
+        return `<td class="num foot-val">${footCostPerConv > 0 ? fmtCurrency(footCostPerConv, cur) : '—'}</td>`;
+      }
       const val = totals[k] || 0;
       const isCurrency = ['spend','cpas_purchase_value','cpas_atc_value'].includes(k);
       if (isCurrency) return `<td class="num foot-val">${val > 0 ? fmtCurrency(val, cur) : '—'}</td>`;
@@ -622,9 +629,8 @@ export async function loadDashboard() {
       const balance     = parseFloat(accInfo.balance      || 0);
       const spendCap    = parseFloat(accInfo.spend_cap    || 0);
       spendEl.innerHTML = `
-      
         <div class="spend-stat">
-          <span class="spend-label">Total Tagihan</span>
+          <span class="spend-label">Saldo</span>
           <span class="spend-val">${fmtCurrency(balance, cur)}</span>
         </div>
         ${spendCap > 0 ? `<div class="spend-stat">

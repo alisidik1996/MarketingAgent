@@ -88,6 +88,7 @@ export const COLUMN_CONFIG = {
   cpas_atc:            { label: 'Tambah ke Keranjang Item Bersama',                 isNum: true  },
   cpas_atc_value:      { label: 'Nilai Konversi Keranjang Item Bersama',            isNum: true  },
   cpas_roas:           { label: 'ROAS Pembelian Item Bersama',                      isNum: true  },
+  cpas_cost_per_conv:  { label: 'Biaya per Konversi',                              isNum: true  },
   detail:              { label: 'Detail',                                           isNum: false },
 };
 
@@ -101,7 +102,7 @@ export const ACTIVE_COLUMNS_CPAS = [
   'impressions', 'cpm', 'clicks', 'ctr', 'cpc',
   'cpas_purchase', 'cpas_purchase_value',
   'cpas_atc', 'cpas_atc_value',
-  'cpas_roas',
+  'cpas_roas', 'cpas_cost_per_conv',
 ];
 
 // Alias — akan dioverride di app.js sesuai tab aktif
