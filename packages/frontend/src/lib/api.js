@@ -14,8 +14,8 @@ async function post(path, body = {}) {
   const res  = await fetch(`${API_BASE}${path}`, {
     method:  'POST',
     headers: {
-      'Content-Type':   'application/json',
-      'x-meta-token':   _token,
+      'Content-Type': 'application/json',
+      'x-meta-token': _token,
     },
     body: JSON.stringify(body),
   });
@@ -23,13 +23,6 @@ async function post(path, body = {}) {
   if (!res.ok || data.error) {
     throw new Error(data.error?.message || data.error || `HTTP ${res.status}`);
   }
-  return data;
-}
-
-async function get(path) {
-  const res  = await fetch(`${API_BASE}${path}`);
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
   return data;
 }
 
@@ -74,10 +67,3 @@ export const fetchAdSets = (campaignId, { since, until }, isCpas = false) =>
 
 export const fetchAds = (campaignId, { since, until }, isCpas = false, adsetId = null) =>
   post('/meta/ads', { campaignId, since, until, isCpas, adsetId });
-
-// ── AI endpoint ───────────────────────────────────────
-export const chatWithAI = (model, messages, temperature, max_tokens) =>
-  post('/ai/chat', { model, messages, temperature, max_tokens });
-
-export const fetchAIModels = () =>
-  get('/ai/models');

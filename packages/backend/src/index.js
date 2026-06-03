@@ -1,7 +1,11 @@
+/**
+ * Backend entry point — Express app bootstrap.
+ * Wires up middleware, routes, and error handling.
+ */
 import express      from 'express';
 import cors         from 'cors';
-import metaRoutes   from './routes/meta.js';
-import aiRoutes     from './routes/ai.js';
+import apiRoutes    from './routes/index.js';
+import { errorHandler } from './middleware/errorHandler.js';
 
 const app  = express();
 const PORT = process.env.PORT || 3001;
@@ -20,15 +24,11 @@ app.get('/health', (_req, res) => {
   res.json({ status: 'ok', ts: new Date().toISOString() });
 });
 
-// ── Routes ────────────────────────────────────────────
-app.use('/api/meta', metaRoutes);
-app.use('/api/ai',   aiRoutes);
+// ── API Routes ────────────────────────────────────────
+app.use('/api', apiRoutes);
 
-// ── Error handler ─────────────────────────────────────
-app.use((err, _req, res, _next) => {
-  console.error('[ERROR]', err.message);
-  res.status(err.status || 500).json({ error: err.message });
-});
+// ── Error Handler (must be last) ─────────────────────
+app.use(errorHandler);
 
 app.listen(PORT, () => {
   console.log(`\n🚀 Backend running → http://localhost:${PORT}`);

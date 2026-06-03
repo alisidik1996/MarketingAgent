@@ -108,9 +108,4 @@ export const ACTIVE_COLUMNS_CPAS = [
 // Alias — akan dioverride di app.js sesuai tab aktif
 export const ACTIVE_COLUMNS = ACTIVE_COLUMNS_REGULAR;
 
-export const AI_MODELS = [
-  { id: 'gpt-5-chat',         label: 'GPT-5 Chat ✓'    },
-  { id: 'gpt-3.5-turbo-0613', label: 'GPT-3.5 Turbo ✓' },
-];
 
-export const AI_DEFAULT_MODEL = 'gpt-5-chat';
