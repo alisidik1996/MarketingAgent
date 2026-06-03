@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Marketing Activity Monitor</title>
+  <script type="module" crossorigin src="/assets/index-DmWTpfKQ.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index-DSalpoPm.css">
+</head>
+<body>
+
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="logo">
+        <span class="logo-text">MarketingHub</span>
+      </div>
+      <button class="sidebar-toggle" id="sidebarToggle">&#9776;</button>
+    </div>
+    <nav class="sidebar-nav">
+      <ul>
+        <li class="nav-item active" data-page="meta-ads">
+    
+          <span class="nav-label">Meta Ads</span>
+        </li>
+        <li class="nav-item disabled">
+          <span class="nav-label">Shopee Ads</span>
+          <span class="badge-soon">Soon</span>
+        </li>
+        <li class="nav-item disabled">
+          <span class="nav-label">TikTok Ads</span>
+          <span class="badge-soon">Soon</span>
+        </li>
+        <li class="nav-item disabled">
+    
+          <span class="nav-label">Shopee Livestream</span>
+          <span class="badge-soon">Soon</span>
+        </li>
+        <li class="nav-item disabled">
+
+          <span class="nav-label">Tiktok Livestream</span>
+          <span class="badge-soon">Soon</span>
+        </li>
+      </ul>
+    </nav>
+    <div class="sidebar-footer"><span class="version">v1.0.0</span></div>
+  </aside>
+
+  <!-- Main -->
+  <main class="main-content" id="mainContent">
+
+    <!-- Topbar -->
+    <header class="topbar">
+      <div class="topbar-left">
+        <h1 class="page-title">Meta Ads Monitor</h1>
+      </div>
+      <div class="topbar-right">
+        <div class="date-range-picker">
+          <label>Periode:</label>
+          <select id="dateRange">
+            <option value="today">Hari Ini</option>
+            <option value="yesterday">Kemarin</option>
+            <option value="last_7d" selected>7 Hari Terakhir</option>
+            <option value="last_30d">30 Hari Terakhir</option>
+            <option value="this_month">Bulan Ini</option>
+            <option value="last_month">Bulan Lalu</option>
+          </select>
+        </div>
+        <button class="btn-refresh" id="btnRefresh">
+          <span class="refresh-icon">↻</span> Refresh
+        </button>
+        <div class="last-updated" id="lastUpdated">—</div>
+        <div class="token-status token-check" id="tokenStatus">
+          <span class="token-icon">⏳</span>
+          <span class="token-text">Memeriksa token...</span>
+          <button class="btn-extend-token" id="btnExtendToken">🔄 Perpanjang</button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Page -->
+    <section class="page active" id="page-meta-ads">
+
+      <!-- Account Bar -->
+      <div class="account-bar" id="accountBar" style="display:none">
+        <div class="account-info">
+          <span class="account-avatar">📘</span>
+          <div>
+            <div class="account-name" id="accountName">—</div>
+            <div class="account-id"   id="accountIdDisplay">—</div>
+          </div>
+        </div>
+        <div class="account-spend-info" id="accountSpendInfo"></div>
+        <div class="account-actions">
+          <!-- Ad Group Tabs -->
+          <div class="adgroup-tabs" id="adGroupTabs">
+            <button class="adgroup-tab active" data-group="Regular Ads">Regular Ads</button>
+            <button class="adgroup-tab" data-group="CPAS Ads">CPAS Ads</button>
+          </div>
+          <span class="status-dot active"></span>
+          <span class="status-text">Terhubung</span>
+        </div>
+      </div>
+
+      <!-- Summary Cards -->
+      <!-- <div class="summary-cards" id="summaryCards" style="display:none"></div> -->
+
+      <!-- Charts -->
+      <!-- <div class="charts-row" id="chartsRow" style="display:none">
+        <div class="card chart-card">
+          <div class="card-header">
+            <h3>Spend &amp; Jangkauan Harian</h3>
+            <div class="chart-legend">
+              <span class="legend-dot" style="background:#4f46e5"></span> Spend
+              <span class="legend-dot" style="background:#06b6d4"></span> Reach
+            </div>
+          </div>
+          <canvas id="chartSpendClicks"></canvas>
+        </div>
+        <div class="card chart-card chart-small">
+          <div class="card-header"><h3>Spend per Campaign</h3></div>
+          <canvas id="chartCampaignPie"></canvas>
+        </div>
+      </div> -->
+
+      <!-- Campaigns Table -->
+      <div class="card table-card" id="tableCard" style="display:none">
+        <div class="card-header">
+          <h3>Kampanye</h3>
+          <div class="table-controls">
+            <input type="text" id="searchCampaign" placeholder="🔍 Cari kampanye..." />
+            <select id="filterStatus">
+              <option value="">Semua Status</option>
+              <option value="ACTIVE">Active</option>
+              <option value="PAUSED">Paused</option>
+            </select>
+            <button class="btn-sm btn-outline" id="btnExportCSV">⬇ Export CSV</button>
+          </div>
+        </div>
+        <div class="table-wrapper">
+          <table id="campaignTable">
+            <thead>
+              <tr>
+                <!-- Header diisi dinamis oleh renderTablePage() di renderer.js -->
+              </tr>
+            </thead>
+            <tbody id="campaignTableBody"></tbody>
+            <tfoot><tr></tr></tfoot>
+          </table>
+        </div>
+        <div class="table-footer">
+          <span id="tableInfo">—</span>
+          <div class="pagination" id="pagination"></div>
+        </div>
+      </div>
+
+      <!-- Drawer -->
+      <div class="drawer-overlay" id="drawerOverlay"></div>
+      <div class="drawer" id="adsetDrawer">
+        <div class="drawer-header">
+          <div>
+            <h3 id="drawerTitle">Detail</h3>
+            <p id="drawerSubtitle" class="drawer-subtitle"></p>
+          </div>
+          <button class="btn-close-drawer" id="btnCloseDrawer">✕</button>
+        </div>
+        <div class="drawer-breadcrumb" id="drawerBreadcrumb"></div>
+        <div class="drawer-body" id="drawerBody"></div>
+      </div>
+
+      <!-- Loading -->
+      <div class="loading-overlay" id="loadingOverlay" style="display:none">
+        <div class="loading-box">
+          <div class="spinner large"></div>
+          <p id="loadingText">Mengambil data dari Meta API...</p>
+        </div>
+      </div>
+
+      <!-- Error -->
+      <div class="error-banner" id="errorBanner" style="display:none">
+        <span>⚠️</span>
+        <span id="errorMessage">Terjadi kesalahan.</span>
+        <button class="btn-dismiss" id="btnDismissError">✕</button>
+      </div>
+
+    </section>
+  </main>
+
+</body>
+</html>
