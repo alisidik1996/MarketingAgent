@@ -6,7 +6,8 @@
   "main": "src/index.js",
   "scripts": {
     "dev":   "nodemon --exec \"node --env-file=../../.env src/index.js\"",
-    "start": "node --env-file=../../.env src/index.js"
+    "start": "node --env-file=../../.env src/index.js",
+    "build": "echo \"backend has no build step\""
   },
   "dependencies": {
     "cors":        "^2.8.5",
