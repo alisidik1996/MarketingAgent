@@ -2,20 +2,21 @@
   "name": "marketing-monitor",
   "version": "1.0.0",
   "private": true,
-  "type": "module",
-  "description": "Marketing Activity Monitor — Meta Ads Dashboard",
+  "description": "Marketing Activity Monitor — Meta Ads Dashboard with AI Agent",
+  "workspaces": [
+    "packages/backend",
+    "packages/frontend"
+  ],
   "scripts": {
-    "dev":   "concurrently -n backend,frontend -c cyan,magenta \"node --env-file=.env --watch packages/backend/src/index.js\" \"npm run dev --prefix packages/frontend\"",
-    "build": "npm install --prefix packages/frontend && npm run build --prefix packages/frontend",
+    "dev":   "concurrently -n backend,frontend -c cyan,magenta \"node --env-file=.env --watch packages/backend/src/index.js\" \"npm run dev -w packages/frontend\"",
+    "build": "npm run build -w packages/frontend",
     "start": "node --env-file=.env packages/backend/src/index.js"
   },
   "devDependencies": {
     "concurrently": "^8.2.2"
   },
-  "dependencies": {
-    "node-fetch": "^3.3.2"
-  },
   "engines": {
-    "node": "20.x"
+    "node": ">=18.0.0",
+    "npm":  ">=9.0.0"
   }
 }

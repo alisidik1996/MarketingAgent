@@ -150,6 +150,9 @@ function rankBadge(val) {
   return `<span class="rank-badge ${cls}">${val.replace(/_/g, ' ')}</span>`;
 }
 
+// exported so renderer tests or future features can reuse it
+export { rankBadge };
+
 // ── Table render ──────────────────────────────────────
 
 export function applyFiltersAndSort() {

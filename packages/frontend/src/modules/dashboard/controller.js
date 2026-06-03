@@ -11,8 +11,7 @@ import {
 import {
   fetchAccount, fetchCampaigns, fetchCampaignInsights,
 } from '../../lib/api.js';
-import { fmtCurrency } from '../../lib/helpers.js';
-import { getDatePreset, escHtml } from '../../lib/helpers.js';
+import { getDatePreset } from '../../lib/helpers.js';
 import { AD_GROUPS } from '../../lib/config.js';
 
 const $ = id => document.getElementById(id);

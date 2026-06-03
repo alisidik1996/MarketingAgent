@@ -57,25 +57,3 @@ export function getAction(actions, type) {
   const a = actions.find(x => x.action_type === type);
   return a ? parseFloat(a.value) || 0 : 0;
 }
-
-export function getCostPerAction(costArr, type) {
-  if (!Array.isArray(costArr)) return 0;
-  const a = costArr.find(x => x.action_type === type);
-  return a ? parseFloat(a.value) || 0 : 0;
-}
-
-export function renderMarkdown(text) {
-  return text
-    .replace(/```(\w*)\n?([\s\S]*?)```/g, '<pre><code>$2</code></pre>')
-    .replace(/`([^`]+)`/g, '<code class="ai-inline-code">$1</code>')
-    .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
-    .replace(/\*([^*]+)\*/g, '<em>$1</em>')
-    .replace(/^### (.+)$/gm, '<h4 class="ai-h4">$1</h4>')
-    .replace(/^## (.+)$/gm,  '<h3 class="ai-h3">$1</h3>')
-    .replace(/^# (.+)$/gm,   '<h2 class="ai-h2">$1</h2>')
-    .replace(/^[\-\*] (.+)$/gm, '<li>$1</li>')
-    .replace(/(<li>.*<\/li>\n?)+/g, m => `<ul>${m}</ul>`)
-    .replace(/^\d+\. (.+)$/gm, '<li>$1</li>')
-    .replace(/\n\n/g, '</p><p>')
-    .replace(/\n/g, '<br>');
-}

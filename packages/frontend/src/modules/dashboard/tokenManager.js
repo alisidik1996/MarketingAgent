@@ -97,14 +97,9 @@ export const TokenManager = {
       }, 3000);
     } catch (err) {
       if (btn) { btn.disabled = false; btn.textContent = '🔄 Perpanjang'; }
-      // Show error inline to avoid circular dependency with renderer.js
-      const banner = document.getElementById('errorBanner');
-      const msg    = document.getElementById('errorMessage');
-      if (banner && msg) {
-        msg.textContent      = 'Gagal perpanjang token: ' + err.message;
-        banner.style.display = 'flex';
-        setTimeout(() => { banner.style.display = 'none'; }, 10000);
-      }
+      // Import showError lazily to avoid circular deps
+      const { showError } = await import('./renderer.js');
+      showError('Gagal perpanjang token: ' + err.message);
     }
   },
 

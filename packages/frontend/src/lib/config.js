@@ -24,8 +24,6 @@ export const DEFAULT_ACCOUNT = '658703572347941';
 
 export const ROWS_PER_PAGE = 15;
 
-export const META_API_VERSION = 'v20.0';
-
 // localStorage keys for token persistence
 export const LS_TOKEN  = 'mam_meta_token';
 export const LS_EXPIRY = 'mam_meta_token_expiry';
@@ -105,7 +103,7 @@ export const ACTIVE_COLUMNS_CPAS = [
   'cpas_roas', 'cpas_cost_per_conv',
 ];
 
-// Alias — akan dioverride di app.js sesuai tab aktif
+// Alias — untuk backward compat
 export const ACTIVE_COLUMNS = ACTIVE_COLUMNS_REGULAR;
 
 
