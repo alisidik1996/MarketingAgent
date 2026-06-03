@@ -24,9 +24,10 @@ export default defineConfig(({ mode }) => {
       port: 4173,
     },
     define: {
-      // Expose only safe non-secret values to the browser
-      __API_BASE__:           JSON.stringify(mode === 'production' ? (env.VITE_API_BASE_PROD || '/api') : '/api'),
-      __FALLBACK_TOKEN__:     JSON.stringify(env.VITE_META_FALLBACK_TOKEN || ''),
+      // Di Vercel, frontend dan backend ada di domain yang sama (/api/*)
+      // Jadi API_BASE cukup '/api' untuk production maupun development
+      __API_BASE__:       JSON.stringify('/api'),
+      __FALLBACK_TOKEN__: JSON.stringify(env.VITE_META_FALLBACK_TOKEN || ''),
     },
   };
 });
