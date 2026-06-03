@@ -8,8 +8,8 @@
     "packages/frontend"
   ],
   "scripts": {
-    "dev":   "concurrently -n backend,frontend -c cyan,magenta \"node --env-file=.env --watch packages/backend/src/index.js\" \"npm run dev -w packages/frontend\"",
-    "build": "npm run build -w packages/frontend",
+    "dev":   "concurrently -n backend,frontend -c cyan,magenta \"node --env-file=.env --watch packages/backend/src/index.js\" \"npm run dev -w @marketing-monitor/frontend\"",
+    "build": "npx vite build --config packages/frontend/vite.config.js",
     "start": "node --env-file=.env packages/backend/src/index.js"
   },
   "devDependencies": {

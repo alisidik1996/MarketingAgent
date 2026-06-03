@@ -1,14 +1,19 @@
 import { defineConfig, loadEnv } from 'vite';
+import { fileURLToPath } from 'url';
+import { dirname, resolve } from 'path';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig(({ mode }) => {
   // Load .env from monorepo root (two levels up)
-  const env = loadEnv(mode, '../../', '');
+  const env = loadEnv(mode, resolve(__dirname, '../../'), '');
 
   return {
-    root: '.',
+    // Root absolut — bekerja baik saat dipanggil dari mana saja
+    root: __dirname,
     publicDir: false,
     build: {
-      outDir: 'dist',
+      outDir: resolve(__dirname, 'dist'),
       emptyOutDir: true,
     },
     server: {
@@ -25,7 +30,6 @@ export default defineConfig(({ mode }) => {
     },
     define: {
       // Di Vercel, frontend dan backend ada di domain yang sama (/api/*)
-      // Jadi API_BASE cukup '/api' untuk production maupun development
       __API_BASE__:       JSON.stringify('/api'),
       __FALLBACK_TOKEN__: JSON.stringify(env.VITE_META_FALLBACK_TOKEN || ''),
     },
