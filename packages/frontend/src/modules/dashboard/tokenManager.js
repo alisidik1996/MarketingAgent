@@ -97,7 +97,8 @@ export const TokenManager = {
       }, 3000);
     } catch (err) {
       if (btn) { btn.disabled = false; btn.textContent = '🔄 Perpanjang'; }
-      // Import showError lazily to avoid circular deps
+      // showError di-import dari renderer — tidak circular karena tokenManager
+      // hanya dipanggil setelah DOM ready, bukan saat module load
       const { showError } = await import('./renderer.js');
       showError('Gagal perpanjang token: ' + err.message);
     }
