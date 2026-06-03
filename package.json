@@ -2,7 +2,8 @@
   "name": "marketing-monitor",
   "version": "1.0.0",
   "private": true,
-  "description": "Marketing Activity Monitor — Meta Ads Dashboard with AI Agent",
+  "type": "module",
+  "description": "Marketing Activity Monitor — Meta Ads Dashboard",
   "workspaces": [
     "packages/backend",
     "packages/frontend"
@@ -15,8 +16,10 @@
   "devDependencies": {
     "concurrently": "^8.2.2"
   },
+  "dependencies": {
+    "node-fetch": "^3.3.2"
+  },
   "engines": {
-    "node": ">=18.0.0",
-    "npm":  ">=9.0.0"
+    "node": "20.x"
   }
 }

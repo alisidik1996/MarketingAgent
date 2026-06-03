@@ -1,0 +1,15 @@
+{
+  "version": 2,
+  "buildCommand": "npm run build -w packages/frontend",
+  "outputDirectory": "packages/frontend/dist",
+  "installCommand": "npm install",
+  "framework": null,
+  "functions": {
+    "api/**/*.js": {
+      "runtime": "nodejs20.x"
+    }
+  },
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": "/api/$1" }
+  ]
+}
