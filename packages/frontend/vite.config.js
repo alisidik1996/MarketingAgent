@@ -13,7 +13,7 @@ export default defineConfig(({ mode }) => {
     root: __dirname,
     publicDir: false,
     build: {
-      outDir: resolve(__dirname, 'dist'),
+      outDir: resolve(__dirname, '../../dist'),
       emptyOutDir: true,
     },
     server: {
